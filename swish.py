@@ -36,13 +36,11 @@ class SwishFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, input):
         ctx.input = input
-        outputs = swish_cpp.forward(input)
-        return outputs
+        return swish_cpp.forward(input)
 
     @staticmethod
-    def backward(ctx, grad_input):
-        outputs = swish_cpp.backward(grad_input, ctx.input)
-        return outputs
+    def backward(ctx, grad_output):
+        return swish_cpp.backward(grad_output, ctx.input)
 
 swish_c = SwishFunction.apply
 

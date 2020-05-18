@@ -1,5 +1,6 @@
 #include <torch/types.h>
 #include <torch/extension.h>
+// bugs with copy_to_
 // #include <ATen/cuda/CUDAApplyUtils.cuh>
 
 #include "CUDAApplyUtils.cuh"
@@ -18,7 +19,7 @@
 
 
 namespace kernel {
-#include "swish.h"
+#include "swish_cuda.h"
 
 using at::cuda::CUDA_tensor_apply2;
 using at::cuda::CUDA_tensor_apply3;
@@ -56,11 +57,6 @@ swish_backward(
 }
 
 } // namespace kernel
-
-template <typename scalar_t>
-__device__ __forceinline__ scalar_t sigmoid(scalar_t z) {
-  return 1.0 / (1.0 + exp(-z));
-}
 
 void
 swish_forward_cuda(

@@ -1,4 +1,5 @@
 #include <torch/extension.h>
+using namespace pybind11::literals;
 
 // at::Tensor swish_forward(torch::Tensor input) {
 //    return input * torch::sigmoid(input);
@@ -34,10 +35,10 @@ swish_forward(const torch::Tensor &input, const at::optional<torch::Tensor> out)
 }
 
 torch::Tensor
-swish_backward(const torch::Tensor &input, const torch::Tensor &grad_out) {
-  auto input_arg = torch::TensorArg(input, "input", 0);
-  auto grad_out_arg = torch::TensorArg(grad_out, "grad_out", 1);
-  torch::checkSameType("swish_backward", input_arg, grad_out_arg);
+swish_backward(const torch::Tensor &grad_out, const torch::Tensor &input) {
+  auto grad_out_arg = torch::TensorArg(grad_out, "grad_out", 0);
+  auto input_arg = torch::TensorArg(input, "input", 1);
+  torch::checkSameType("swish_backward", grad_out_arg, input_arg);
 
   auto grad_inp = torch::empty_like(input);
   switch (input.device().type()) {
@@ -51,6 +52,7 @@ swish_backward(const torch::Tensor &input, const torch::Tensor &grad_out) {
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("forward", &swish_forward, "swish forward");
-    m.def("backward", &swish_backward, "swish backward");    
+    // TODO note here when there is a optional parameter, must specify the args name and default value
+    m.def("forward", &swish_forward, "swish forward func", "input"_a, "out"_a = nullptr);
+    m.def("backward", &swish_backward, "swish backward func", "grad_out"_a, "input"_a);    
 }
