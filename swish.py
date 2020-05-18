@@ -1,5 +1,6 @@
 import math
 import torch
+import torch.nn as nn
 
 import swish_cpp
 
@@ -43,4 +44,23 @@ class SwishFunction(torch.autograd.Function):
         outputs = swish_cpp.backward(grad_input, ctx.input)
         return outputs
 
+swish_c = SwishFunction.apply
 
+if __name__ == "__main__":
+     x = torch.rand((4, 5))
+     print(x)
+     print("="*50)
+     print("check forward...")
+     print(swish_c(x))
+     print(swish_naive(x))
+     print("="*50)
+     print("check backward...")
+     a = torch.rand((4, 5), requires_grad=True)
+     b = torch.zeros_like(a, requires_grad=True)
+     b.data = a.data
+     al = swish_c(a).sum()
+     bl = swish_naive(b).sum()
+     al.backward()
+     bl.backward()
+     print(a.grad)
+     print(b.grad)
