@@ -2,63 +2,46 @@ import math
 import torch
 import torch.nn as nn
 
-import swish_cpp
+# import swish_cpp
 
 
 def swish_naive(x):
     return x * torch.sigmoid(x)
 
-######################################
-sigmoid = torch.nn.Sigmoid()
-class Swish(torch.autograd.Function):
+
+class SwishFuncV1(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, i):
-        result = i * sigmoid(i)
-        ctx.save_for_backward(i)
-        return result
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        return x * torch.sigmoid(x)
 
     @staticmethod
     def backward(ctx, grad_output):
-        i = ctx.saved_variables[0]
-        sigmoid_i = sigmoid(i)
-        return grad_output * (sigmoid_i * (1 + i * (1 - sigmoid_i)))
+        x, = ctx.saved_variables
+        sigmoid_x = torch.sigmoid(x)
+        return grad_output * (sigmoid_x * (1 + x * (1 - sigmoid_x)))
 
-swish = Swish.apply
+swish_v1 = SwishFuncV1.apply
 
-class Swish_module(nn.Module):
+
+# class SwishFuncV2(torch.autograd.Function):
+#     @staticmethod
+#     def forward(ctx, x):
+#         ctx.save_for_backward(x)
+#         return swish_cpp.forward(x)
+
+#     @staticmethod
+#     def backward(ctx, grad_output):
+#         x, = ctx.saved_variables
+#         return swish_cpp.backward(grad_output, x)
+
+# swish_v2 = SwishFuncV2.apply
+
+
+class SwishActivation(nn.Module):
+    def __init__(self, swish_func_impl):
+        super(SwishActivation, self).__init__()
+        self.swish_func = swish_func_impl
+
     def forward(self, x):
-        return swish(x)
-
-swish_layer = Swish_module()
-
-######################################
-class SwishFunction(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, input):
-        ctx.input = input
-        return swish_cpp.forward(input)
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        return swish_cpp.backward(grad_output, ctx.input)
-
-swish_c = SwishFunction.apply
-
-if __name__ == "__main__":
-     x = torch.rand((4, 5))
-     print(x)
-     print("="*50)
-     print("check forward...")
-     print(swish_c(x.cuda()))
-     print(swish_naive(x.cuda()))
-     print("="*50)
-     print("check backward...")
-     a = torch.rand((4, 5), requires_grad=True)
-     b = torch.zeros_like(a, requires_grad=True)
-     b.data = a.data
-     al = swish_c(a.cuda()).sum()
-     bl = swish_naive(b.cuda()).sum()
-     al.backward()
-     bl.backward()
-     print(a.grad)
-     print(b.grad)
+        return self.swish_func(x)

@@ -1,19 +1,20 @@
 #include <torch/extension.h>
 using namespace pybind11::literals;
 
-// at::Tensor swish_forward(torch::Tensor input) {
-//    return input * torch::sigmoid(input);
-// }
-
-// at::Tensor swish_backward(torch::Tensor grad_input, torch::Tensor input) {
-//     auto sig = torch::sigmoid(input);
-//     return grad_input * (sig + input * sig * (1 - sig));
-// }
-
-
 // Forward declaration of kernels
 void swish_forward_cuda(torch::Tensor &output, const torch::Tensor &input);
 void swish_backward_cuda(torch::Tensor &grad_inp, const torch::Tensor &input, const torch::Tensor &grad_out);
+
+// Forward declaration of hosts
+// also can run on device, but not fully optimized
+at::Tensor swish_forward_cpu(torch::Tensor input) {
+    return input * torch::sigmoid(input);
+}
+
+at::Tensor swish_backward_cpu(torch::Tensor grad_input, torch::Tensor input) {
+    auto sig = torch::sigmoid(input);
+    return grad_input * (sig * (1 + input * (1 - sig)));
+}
 
 torch::Tensor
 swish_forward(const torch::Tensor &input, const at::optional<torch::Tensor> out) {
@@ -52,7 +53,8 @@ swish_backward(const torch::Tensor &grad_out, const torch::Tensor &input) {
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    // TODO note here when there is a optional parameter, must specify the args name and default value
+    // TODO note here when there is a optional parameter
+    // pybind11 must specify the args name and default value
     m.def("forward", &swish_forward, "swish forward func", "input"_a, "out"_a = nullptr);
     m.def("backward", &swish_backward, "swish backward func", "grad_out"_a, "input"_a);    
 }
