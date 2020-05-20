@@ -24,8 +24,8 @@ void swish_fwd_func(scalar_t &out, const scalar_t &inp) {
 template <typename scalar_t>
 GLOBAL_INLINE
 void swish_bwd_func(scalar_t &grad_inp, const scalar_t &inp, const scalar_t &grad_out) {
-  // const scalar_t sig = scalar_t(1.0) / (scalar_t(1.0) + exp(-inp));
-  const scalar_t sig = sigmoid(inp);
+  const scalar_t sig = scalar_t(1.0) / (scalar_t(1.0) + exp(-inp));
+  // const scalar_t sig = sigmoid(inp);
   const scalar_t grad = sig * (scalar_t(1.0) + inp * (scalar_t(1.0) - sig));
   grad_inp = grad_out * grad;
 };

@@ -2,7 +2,7 @@ import math
 import torch
 import torch.nn as nn
 
-# import swish_cpp
+import swish_cpp
 
 
 def swish_naive(x):
@@ -24,18 +24,18 @@ class SwishFuncV1(torch.autograd.Function):
 swish_v1 = SwishFuncV1.apply
 
 
-# class SwishFuncV2(torch.autograd.Function):
-#     @staticmethod
-#     def forward(ctx, x):
-#         ctx.save_for_backward(x)
-#         return swish_cpp.forward(x)
+class SwishFuncV2(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        return swish_cpp.forward(x)
 
-#     @staticmethod
-#     def backward(ctx, grad_output):
-#         x, = ctx.saved_variables
-#         return swish_cpp.backward(grad_output, x)
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, = ctx.saved_variables
+        return swish_cpp.backward(grad_output, x)
 
-# swish_v2 = SwishFuncV2.apply
+swish_v2 = SwishFuncV2.apply
 
 
 class SwishActivation(nn.Module):
